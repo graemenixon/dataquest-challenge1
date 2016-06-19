@@ -1,0 +1,171 @@
+This was the first challenge I've completed through DataQuest (www.dataquest.io)
+Here is the code I used. I leaned quite a bit on the solutions provided, but added my own variable names and comments.
+My implementation for the final part, however, is quite different than the solution provided. But still provided the
+right final numbers.
+
+Part 1: Summarize major categories
+Graeme Nixon solution:
+
+
+#######
+
+import csv
+import pandas as pd
+import numpy as np
+import math
+
+# Opens the "All ages file" and reads it into a pandas dataframe
+f = open("all-ages.csv", 'r')
+all_ages = pd.read_csv(f)
+
+# Used to "print" the dataframe to the screen to investigate
+##all_ages.head(len(all_ages))
+
+# Open the "Recent Grads" file and reads it into a pandas dataframe
+t = open("recent-grads.csv", 'r')
+recent_grads = pd.read_csv(t)
+
+# Sets up two empty dictionaries
+all_ages_major_categories = dict()
+recent_grads_major_categories = dict()
+
+# Display both the "All Ages" and "Recent grads" data sets
+# Note: it appears that ".head" method will terminate the function - can't have more than 1 ".head" argument
+##all_ages.head(len(all_ages))
+##recent_grads.head(len(all_ages))
+
+# Find all the majors in all-ages.csv
+all_ages_major = all_ages["Major_category"].value_counts().index
+##print(all_ages_major)
+
+
+# Extract the "Major_category" and "Totals" columns
+major_categories_and_totals = all_ages[["Major_category", "Total"]]
+
+def sum_totals_across_majors(dataset):
+    # Split the majors into their unique categories (index makes them keys)
+    categories = dataset["Major_category"].value_counts().index
+    # Initialize a dictionary that we can sum the values of the above keys
+    count_dictionary = dict()
+    
+    # Start the code so we can sum across our categories above
+    # Loop through our new categories variable:
+    for major in categories:
+        # for the provided dataset, check to see if the "Major_category" (this columns must exist btw) is equal to the
+        # current major being checked. If it is, keep this row (returns a "True"). If it isn't, drop this row for this
+        # loop iteration. At the end you'll have homogenous majors stored in the major_in_dataset variable
+        major_in_dataset = dataset[dataset["Major_category"] == major]
+        # Now sum the "Total" column of this new sub-dataset. axis = 0 means sum across the column values.
+        total = major_in_dataset["Total"].sum(axis=0)
+        # Append this to the dictionary we initialized above, with the current "major" we're looping on as the key
+        # and the "total" we just calculated as the value.
+        count_dictionary[major] = total
+        # Repeat for all 
+    return count_dictionary
+    
+    
+sum_totals_across_majors(all_ages)
+
+sum_totals_across_majors(recent_grads)
+
+
+##############
+Part 2: Low wage job rates
+
+##recent_grads.head()
+
+total_employed = recent_grads["Total"]
+low_wage_employed = recent_grads["Low_wage_jobs"]
+low_wage_proportion = [low_wage_employed / total_employed]
+
+##print(recent_grads["Total"])
+recent_grads["Percent_low_wage"] = (recent_grads["Low_wage_jobs"] / recent_grads["Total"] * 100)
+print(recent_grads["Percent_low_wage"])
+
+# Answer for DataQuest:
+# Find the proportion of "low wage" recent graduates to "total" recent graduates
+low_wage_percent = (recent_grads["Low_wage_jobs"].sum(axis=0)) / (recent_grads["Total"].sum(axis=0))
+# Multiply by 100 to get a %, round to 2 decimal places
+low_wage_percent_100 = str((round(low_wage_percent, 4)) * 100)
+# Print the answer to the user in a human-readable form
+print("The number of low wage recent graduates is: " + low_wage_percent_100 + "%")
+
+###########
+Part 3: Comparing datasets
+
+# Compare recent grads and all grads
+
+# Extract all the majors for us to compare the two datasets (they use the same major classification)
+majors = recent_grads["Major"].value_counts().index
+
+# Initialize our lower unemp counts for each dataset
+recent_grad_lower_unemp_count = 0
+all_ages_lower_unemp_count = 0
+same = 0
+
+# Create a loop that compares the count of unemployed people per major
+for major in majors:
+    # Extract rows from "all_ages" where the current major is matched
+    all_ages_compare = all_ages[all_ages["Major"] == major]
+    all_ages_unemployment_rate = float(all_ages_compare["Unemployment_rate"])
+    # Extract rows from "recent_grads" where the current major is matched
+    recent_grads_compare = recent_grads[recent_grads["Major"] == major]
+    recent_grads_unemployment_rate = float(recent_grads_compare["Unemployment_rate"])
+    
+    if recent_grads_unemployment_rate < all_ages_unemployment_rate:
+        recent_grad_lower_unemp_count += 1
+    elif all_ages_unemployment_rate < recent_grads_unemployment_rate:
+        all_ages_lower_unemp_count += 1
+    else:
+        same += 1
+        
+print("Recent graduates had " + str(recent_grad_lower_unemp_count) + " lower unemployment counts than all ages.")
+print("All ages had " + str(all_ages_lower_unemp_count) + " lower unemployment counts than recent grads.")
+print(str(same) + " majors had the exact same unemployment rates!")
+
+
+########
+DataQuest solutions:
+###### Part 1:
+
+# All values for Major_category
+print(all_ages['Major_category'].value_counts().index)
+
+all_ages_major_categories = dict()
+recent_grads_major_categories = dict()
+def calculate_major_cat_totals(df):
+    cats = df['Major_category'].value_counts().index
+    counts_dictionary = dict()
+
+    for c in cats:
+        major_df = df[df["Major_category"] == c]
+        total = major_df["Total"].sum(axis=0)
+        counts_dictionary[c] = total
+    return counts_dictionary
+
+all_ages_major_categories = calculate_major_cat_totals(all_ages)
+recent_grads_major_categories = calculate_major_cat_totals(recent_grads)
+
+
+#### Part 2
+low_wage_percent = 0.0
+low_wage_percent = (recent_grads['Low_wage_jobs'].sum(axis=0))/(recent_grads['Total'].sum(axis=0))
+
+
+#### Part 3:
+# All majors, common to both DataFrames
+majors = recent_grads['Major'].value_counts().index
+
+recent_grads_lower_unemp_count = 0
+all_ages_lower_unemp_count = 0
+for m in majors:
+    recent_grads_row =  recent_grads[recent_grads['Major'] == m]
+    all_ages_row = all_ages[all_ages['Major'] == m]
+    
+    recent_grads_unemp_rate = recent_grads_row['Unemployment_rate'].values[0]
+    all_ages_unemp_rate = all_ages_row['Unemployment_rate'].values[0]
+    
+    if recent_grads_unemp_rate < all_ages_unemp_rate:
+        recent_grads_lower_unemp_count += 1
+    elif all_ages_unemp_rate < recent_grads_unemp_rate:
+        all_ages_lower_unemp_count += 1
